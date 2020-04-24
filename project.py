@@ -1,4 +1,3 @@
-
 import csv
 import json
 import os
@@ -17,12 +16,22 @@ app = Flask('app')
 
 @app.route('/gen-password')
 def gen_password():
-    DEFAULT_LENGHT = 10
-    length = int(request.args.get('length', DEFAULT_LENGHT))
-    return ''.join([
-        random.choice(string.ascii_lowercase)
-        for _ in range(length)
-    ])
+    default_length = 12
+    default_digit = 0
+    length = int(request.args.get('length', default_length))
+    digit = int(request.args.get('digit', default_digit))
+    if length < 8 or length > 24:
+        return 'error'
+    elif digit == 1:
+        return ''.join([
+            random.choice(string.hexdigits)
+            for _ in range(length)
+        ])
+    else:
+        return ''.join([
+            random.choice(string.ascii_lowercase)
+            for _ in range(length)
+        ])
 
 
 @app.route('/get-customers')
@@ -47,42 +56,28 @@ def execute_query(query):
 
 @app.route('/get-first-name')
 def get_custom():
-    query = 'select CustomerId, FirstName from customers'
-    records = execute_query2(query)
+    query = 'select distinct FirstName from customers'
+    records = execute_query(query)
     result = '<br>'.join([
         str(record)
         for record in records
     ])
     return result
-
-
-def execute_query2(query):
-    db_path = os.path.join(os.getcwd(), 'chinook.db')
-    conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-    cur.execute(query)
-    records = cur.fetchall()
-    return records
 
 
 @app.route('/get-city-and-state')
 def get_city_and_state():
-    query = 'select State, City from customers'
-    records = execute_query3(query)
+    default_city = ''
+    default_state = ''
+    state = request.args.get('State', default_state)
+    city = request.args.get('City', default_city)
+    query = f'select FirstName, LastName, State, City from customers where State = "{state}" or City = "{city}"'
+    records = execute_query(query)
     result = '<br>'.join([
         str(record)
         for record in records
     ])
     return result
-
-
-def execute_query3(query):
-    db_path = os.path.join(os.getcwd(), 'chinook.db')
-    conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-    cur.execute(query)
-    records = cur.fetchall()
-    return records
 
 
 @app.route('/get-astronauts')
@@ -107,10 +102,10 @@ def send():
 
 @app.route('/gen')
 def series():
-    return '\n'.join([
-                    str(fake.email() + ' - ' + fake.name())
-                    for _ in range(100)
-                    ]).replace('\n', '<br>')
+    return '<br>'.join([
+        str(fake.email() + ' - ' + fake.name())
+        for _ in range(100)
+    ])
 
 
 @app.route('/average')
@@ -139,22 +134,13 @@ def students():
 
 @app.route('/turnover')
 def get_turnover():
-    query = 'select State, City from customers'
-    records = execute_query4(query)
-    result = '<br>'.join([
+    query = 'select sum(UnitPrice) * sum(Quantity) from invoice_items'
+    records = execute_query(query)
+    result = '<br>'.join(['Оборот компании - ' +
         str(record)
         for record in records
     ])
     return result
-
-
-def execute_query4(query):
-    db_path = os.path.join(os.getcwd(), 'chinook.db')
-    conn = sqlite3.connect(db_path)
-    cur = conn.cursor()
-    cur.execute(query)
-    records = cur.fetchall()
-    return records
 
 
 app.run(debug=True)
