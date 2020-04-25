@@ -20,18 +20,20 @@ def gen_password():
     default_digit = 0
     length = int(request.args.get('length', default_length))
     digit = int(request.args.get('digit', default_digit))
+    chars = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'
+    my_pass = ''
     if length < 8 or length > 24:
         return 'error'
     elif digit == 1:
         return ''.join([
-            random.choice(string.hexdigits)
+            random.choice(string.digits + string.ascii_letters)
             for _ in range(length)
         ])
-    else:
-        return ''.join([
-            random.choice(string.ascii_lowercase)
-            for _ in range(length)
-        ])
+    else: #не используя список
+        for _ in range(length):
+            next_index = random.randrange(len(chars))
+            my_pass = my_pass + chars[next_index]
+        return my_pass
 
 
 @app.route('/get-customers')
@@ -134,9 +136,9 @@ def students():
 
 @app.route('/turnover')
 def get_turnover():
-    query = 'select sum(UnitPrice) * sum(Quantity) from invoice_items'
+    query = 'select round(sum(UnitPrice*Quantity), 2) from invoice_items'
     records = execute_query(query)
-    result = '<br>'.join(['Оборот компании - ' +
+    result = ''.join(["Оборот компании - " +
         str(record)
         for record in records
     ])
